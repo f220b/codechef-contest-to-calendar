@@ -30,15 +30,10 @@ function propfindBody(props) {
 }
 
 async function propfind(url, depth, props, auth) {
-  return davRequest('PROPFIND', url, depth, propfindBody(props), auth);
-}
-
-/* PROPFIND or REPORT: send XML, get a parsed 207 multistatus back. */
-async function davRequest(method, url, depth, body, auth) {
   let res;
   try {
     res = await fetch(url, {
-      method,
+      method: 'PROPFIND',
       // credentials:'omit' is load-bearing. On a 401 with WWW-Authenticate,
       // Chrome otherwise swallows the challenge and shows its own Basic auth
       // dialog for caldav.icloud.com, which hides the real error from us and
@@ -49,7 +44,7 @@ async function davRequest(method, url, depth, body, auth) {
         Depth: String(depth),
         'Content-Type': 'application/xml; charset=utf-8'
       },
-      body
+      body: propfindBody(props)
     });
   } catch (err) {
     throw new Error(`Could not reach iCloud (${err.message}).`);
@@ -63,7 +58,7 @@ async function davRequest(method, url, depth, body, auth) {
     throw err;
   }
   if (res.status !== 207 && !res.ok) {
-    throw new Error(`iCloud returned HTTP ${res.status} for ${method} ${url}`);
+    throw new Error(`iCloud returned HTTP ${res.status} for PROPFIND ${url}`);
   }
 
   const text = await res.text();
@@ -169,31 +164,18 @@ export async function discoverCalendars(appleId, password) {
   return { auth, home, calendars };
 }
 
-/** True if the calendar already holds an event with this UID, under any
- * resource name (e.g. one imported from an .ics file rather than written here). */
-async function hasEvent(calendarHref, uid, auth) {
-  const body = `<?xml version="1.0" encoding="UTF-8"?>
-<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-  <d:prop><d:getetag/></d:prop>
-  <c:filter>
-    <c:comp-filter name="VCALENDAR">
-      <c:comp-filter name="VEVENT">
-        <c:prop-filter name="UID">
-          <c:text-match collation="i;octet">${uid.replace(/[<>&]/g, '')}</c:text-match>
-        </c:prop-filter>
-      </c:comp-filter>
-    </c:comp-filter>
-  </c:filter>
-</c:calendar-query>`;
-  const { doc, baseUrl } = await davRequest('REPORT', calendarHref, 1, body, auth);
-  return parseResponses(doc, baseUrl).some(r => r.props.length);
-}
-
 /** Add one event unless it is already there. Returns 'created' or 'exists';
- * an existing event is never overwritten. */
-export async function addEvent(calendarHref, resourceName, uid, ics, auth) {
-  if (await hasEvent(calendarHref, uid, auth)) return 'exists';
-
+ * an existing event is never overwritten.
+ *
+ * The server does the check, atomically, as part of the write:
+ *   - If-None-Match: * makes the PUT create-only, so an event already at this
+ *     resource name (one this extension wrote) answers 412.
+ *   - CalDAV forbids two resources with the same UID in one calendar, so an
+ *     event with this UID under another name (e.g. imported from an .ics file)
+ *     is refused with the no-uid-conflict precondition (RFC 4791 §5.3.2.1).
+ * A filtered REPORT would be the obvious way to ask first, but iCloud rejects
+ * a calendar-query on UID with 412. */
+export async function addEvent(calendarHref, resourceName, ics, auth) {
   const url = new URL(encodeURIComponent(resourceName) + '.ics', calendarHref).href;
 
   let res;
@@ -204,8 +186,7 @@ export async function addEvent(calendarHref, resourceName, uid, ics, auth) {
       headers: {
         Authorization: auth,
         'Content-Type': 'text/calendar; charset=utf-8',
-        // Create-only: if the resource appeared since the check, fail with 412
-        // rather than overwrite it.
+        // Create-only: answer 412 rather than overwrite an existing event.
         'If-None-Match': '*'
       },
       body: ics
@@ -216,12 +197,13 @@ export async function addEvent(calendarHref, resourceName, uid, ics, auth) {
 
   if (res.status === 201 || res.status === 204 || res.status === 200) return 'created';
   if (res.status === 412) return 'exists';
+
+  const detail = (await res.text().catch(() => '')).slice(0, 500);
+  if ((res.status === 403 || res.status === 409) && /no-uid-conflict/i.test(detail)) return 'exists';
   if (res.status === 401) throw new Error('iCloud rejected the credentials.');
   if (res.status === 403) throw new Error('iCloud refused the write (403). The calendar may be read-only.');
   if (res.status === 507) throw new Error('iCloud storage is full (507).');
-
-  const detail = (await res.text().catch(() => '')).slice(0, 200);
-  throw new Error(`iCloud returned HTTP ${res.status}${detail ? ` — ${detail}` : ''}`);
+  throw new Error(`iCloud returned HTTP ${res.status}${detail ? ` — ${detail.slice(0, 200)}` : ''}`);
 }
 
 export { basicAuth };

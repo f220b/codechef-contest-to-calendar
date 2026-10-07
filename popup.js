@@ -454,10 +454,10 @@ async function finishSetup() {
 
 /* ---------- adding ---------- */
 
-/* Each writer checks the calendar for the contest's UID first and returns
- * 'exists' instead of writing a second copy. */
+/* Each writer returns 'exists' instead of writing a second copy when the
+ * calendar already holds this contest's UID. */
 const writers = {
-  apple: (c, alarm) => addEvent(calendarHref, resourceFor(c), uidFor(c), buildIcs(c, alarm), auth),
+  apple: (c, alarm) => addEvent(calendarHref, resourceFor(c), buildIcs(c, alarm), auth),
   google: (c, alarm) => gcal.addEvent(googleCalId, uidFor(c), googleEvent(c, alarm))
 };
 
