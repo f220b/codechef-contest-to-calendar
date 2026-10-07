@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "CodeChef to Calendar",
+  "version": "3.0.0",
+  "description": "Adds upcoming CodeChef contests to your Apple (iCloud) and/or Google calendar.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzDeE5dZvJez2FCvUut3lqkrgnq70cMG7CtZwsCNLJZcuy7rnsao/g2Q+fXWrIixY0B1CRftJvudypbHj8l5t8hesPdtQfGyfviv/74ah7WzVMKXcdnH9GIL+PXeGTA2JyyIJ7kSt92f8PKaYgBFgRNw7mbZ5xWjehF//ULaLVljtbKzM+XGq/laQIUDc/f09sggzWCcYXz00tvfe5tvP9K65E0yQYDKM9YcaxBDCq+Wpr4AO0IZCu1dhkHYOAib/Y3y5Fy4bRcd6f9p63C/X1ciWbcGEcHMVhBf0sxBJW17F531murNnxA+4yGDidlJa/Na3SeWKNUNDtdOs5SBu9QIDAQAB",
+  "permissions": [
+    "storage",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://www.codechef.com/*",
+    "https://caldav.icloud.com/*",
+    "https://*.icloud.com/*",
+    "https://www.googleapis.com/*",
+    "https://oauth2.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/calendar.calendarlist.readonly"
+    ]
+  },
+  "action": {
+    "default_title": "CodeChef contests",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

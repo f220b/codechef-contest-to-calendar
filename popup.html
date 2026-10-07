@@ -1,0 +1,99 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+<title>CodeChef contests</title>
+
+<header>
+  <h1>Upcoming CodeChef contests</h1>
+  <button id="refresh" class="ghost" title="Reload from CodeChef">Refresh</button>
+</header>
+
+<!-- First run, and "Change calendars": pick Apple, Google or both, and connect each. -->
+<section id="setup" hidden>
+  <p class="lead">Choose where contests go. Pick one or both; you can change this any time.
+    Each needs a calendar named <strong>Contests</strong>.</p>
+
+  <div class="provider">
+    <label class="check"><input type="checkbox" id="useApple"> Apple iCloud Calendar</label>
+
+    <div id="appleConnected" class="connected" hidden>
+      Connected as <strong id="appleWho"></strong>
+      <button id="signout" class="link inline">Sign out and forget password</button>
+    </div>
+
+    <div id="appleForm" hidden>
+      <label class="field">
+        <span>Apple ID</span>
+        <input id="appleId" type="text" autocomplete="username" placeholder="you@icloud.com or +<country code><number>">
+      </label>
+
+      <label class="field">
+        <span>App-specific password</span>
+        <input id="appPassword" type="password" autocomplete="current-password" placeholder="xxxx-xxxx-xxxx-xxxx">
+      </label>
+
+      <p class="hint">
+        Email address, or a phone-number Apple ID <strong>with its country code</strong>.
+        Create the password at <strong>account.apple.com</strong> → Sign-In and
+        Security → App-Specific Passwords. Your normal Apple ID password will not work.
+      </p>
+      <p class="warn">
+        Stored unencrypted in this browser profile. Anything able to read your Chrome
+        profile directory can read it. Revoke it at any time from the same Apple page.
+      </p>
+
+      <button id="connect" class="primary">Connect iCloud</button>
+      <div id="signinStatus" class="status"></div>
+    </div>
+  </div>
+
+  <div class="provider">
+    <label class="check"><input type="checkbox" id="useGoogle"> Google Calendar</label>
+
+    <div id="googleConnected" class="connected" hidden>
+      Connected
+      <button id="googleSignout" class="link inline">Sign out of Google</button>
+    </div>
+
+    <div id="googleForm" hidden>
+      <p class="hint">Signs in through Chrome. Requires Google Chrome.</p>
+      <button id="googleConnect" class="primary">Connect Google</button>
+      <div id="googleStatus" class="status"></div>
+    </div>
+  </div>
+
+  <button id="done" class="primary" disabled>Done</button>
+  <div id="setupStatus" class="status"></div>
+</section>
+
+<!-- Normal operation -->
+<section id="main" hidden>
+  <div id="status" class="status">Loading contests…</div>
+  <ul id="list"></ul>
+
+  <footer>
+    <div class="row">
+      <label class="check">
+        <input type="checkbox" id="startersOnly" checked>
+        Starters contests only
+      </label>
+    </div>
+    <div class="row">
+      <label for="alarm">Remind me</label>
+      <select id="alarm">
+        <option value="">no alert</option>
+        <option value="10">10 min before</option>
+        <option value="30" selected>30 min before</option>
+        <option value="60">1 hour before</option>
+        <option value="1440">1 day before</option>
+      </select>
+    </div>
+    <div class="target">
+      Adding to <strong id="targetsLabel"></strong>
+    </div>
+    <button id="add" class="primary" disabled>Add to Calendar</button>
+    <button id="change" class="link">Change calendars</button>
+  </footer>
+</section>
+
+<script type="module" src="popup.js"></script>
